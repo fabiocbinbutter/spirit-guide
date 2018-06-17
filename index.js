@@ -3,7 +3,7 @@ exports = module.exports = {
 	}
 
 function which(...fns){
-		return async (...args) => {
+		return async function whichHandler(...args){
 				for(fn of fns){
 						let maybeNewFn = await fn(...args)
 						if(maybeNewFn !== undefined){return maybeNewFn}
@@ -11,13 +11,14 @@ function which(...fns){
 			}
 	}
 function way(...fns){
-		return async (...args) => {
-				//console.log(1,...fns)
-				var first = fns.shift()
-				//console.log(2,...fns)
-				return fns.length
-						? await first(way(...fns))(...args)
-						: await first(...args)
+		return async function wayHandler(...args){
+				var head = fns[0]
+				var rest = fns.slice(1)
+				if(!head){return}
+				if(rest.length){
+						return await head(way(...rest))(...args)
+					}
+				return await head(...args)
 			}
 	}
 function route(str){
@@ -35,9 +36,9 @@ function route(str){
 				path:matches[9]
 			}
 		var required = {
-				verb: m.verb != '' && m.verb != '*' ? m.verb : undefined,
+				verb: m.verb && m.verb != '' && m.verb != '*' ? m.verb.toLowerCase() : undefined,
 				protocol: m.protocol,
-				domain: m.domain && m.domain.split(".").reverse(),
+				domain: m.domain && m.domain.toLowerCase().split(".").reverse(),
 				ellipsis: !!m.ellipsis,
 				path: m.path && m.path.split("/")
 			}
@@ -48,52 +49,53 @@ function route(str){
 				throw "httpRequestMatch only supports ** at the end of the path pattern"
 			}
 
-		return handler => async request => {
-				var capture = {}, rest
-				if(required.verb && reqest.verb != required.verb){return}
-				if(required.protocol && request.protocol != required.protocol){return}
-				if(required.domain){
-						let offset = -1, parts = request.host.split(".").reverse()
-						for (let requiredPart of required.domain){
-								offset++;
-								if(parts[offset] == requiredPart){continue}
-								if(requiredPart == "*"){continue}
-								if(requiredPart[0] == ":"){
-										capture[requiredPart.slice(1)] = parts[offset]
-										continue
+		return function routeMiddleware(handler){
+				return async function routeHandler(request){
+						var capture = {}, rest
+						if(required.verb && (request.method||"").toLowerCase() != required.verb){return}
+						if(required.protocol && request.protocol != required.protocol){return}
+						if(required.domain){
+								let offset = -1, parts = (request.host||"").toLowerCase().split(".").reverse()
+								for (let requiredPart of required.domain){
+										offset++;
+										if(parts[offset] == requiredPart){continue}
+										if(requiredPart == "*"){continue}
+										if(requiredPart[0] == ":"){
+												capture[requiredPart.slice(1)] = parts[offset]
+												continue
+											}
+										if(requiredPart == "**"){break}
+										return
 									}
-								if(requiredPart == "**"){
-										domainRemainder = parts.slice(offset).join('.')
-										break
-									}
-								return
 							}
+						if(required.path){
+								let offset = -1
+								let parts = required.ellipsis && request.rest
+								 		? [''].concat(request.rest)
+										: request.pathname.split("/")
+								for (let requiredPart of required.path){
+										offset++;
+										if(parts[offset] == requiredPart){continue}
+										if(requiredPart == "*"){continue}
+										if(requiredPart[0] == ":"){
+												capture[requiredPart.slice(1)] = parts[offset]
+												continue
+											}
+										if(requiredPart == "**"){
+												rest = parts.slice(offset)
+												break
+											}
+										return
+									}
+							}
+						return await handler({
+								...request,
+								...(rest?{rest}:{}),
+								params:{
+										...request.params,
+										...capture
+									}
+							})
 					}
-				if(required.path){
-						let offset = -1
-						let parts = required.ellipsis && request.rest || request.path.split("/")
-						for (let requiredPart of required.path){
-								offset++;
-								if(parts[offset] == requiredPart){continue}
-								if(requiredPart == "*"){continue}
-								if(requiredPart[0] == ":"){
-										capture[requiredPart.slice(1)] = parts[offset]
-										continue
-									}
-								if(requiredPart == "**"){
-										rest = parts.slice(offset)
-										break
-									}
-								return
-							}
-					}
-				return await handler({
-						...request,
-						...(rest?{rest}:{}),
-						params:{
-								...request.params,
-								...capture
-							}
-					})
 			}
 	}

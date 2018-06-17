@@ -1,0 +1,24 @@
+{
+  "name": "spirit-guide",
+  "version": "0.1.0",
+  "description": "A functional router for a functional webserver",
+  "main": "index.js",
+  "scripts": {
+    "test": "tests.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fabiocbinbutter/spirit-guide.git"
+  },
+  "keywords": [
+    "webserver",
+    "router",
+    "functional"
+  ],
+  "author": "Fabio Beltramini",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/fabiocbinbutter/spirit-guide/issues"
+  },
+  "homepage": "https://github.com/fabiocbinbutter/spirit-guide#readme"
+}

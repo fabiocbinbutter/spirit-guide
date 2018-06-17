@@ -1,7 +1,6 @@
 # Spirit Guide
 
-Spirit Guide is an extremely flexible approach to routing, supported by a minimalistic set of helper functions.
-
+Spirit Guide is an extremely flexible, functional approach to routing, supported by a minimalistic set of helper functions.
 
 It is particularly convenient when used for web server request routing together with [Spirit](https://github.com/spirit-js/spirit).
 
@@ -11,10 +10,18 @@ const spirit = require("spirit").node
 const {route,which,way} = require("spirit-guide")
 
 const app = which(
-	way(route('/'), req => spirit.fileResponse("index.html")),
-	way(route('/api'), jsonResp, req=>req.query)
+	way(
+		route("/"),
+		req => spirit.fileResponse("index.html")
+	),
+	way(
+		pass => req => request.hostname==localhost || undefined,
+		jsonResp,
+		req=>req.query
+	)
 )
-http.createServer(spirit.adapter(app)).listen(6103, ()=>console.log("http://localhost:6103"))
+http.createServer(spirit.adapter(app)).listen(6103,
+ ()=>console.log("http://localhost:6103"))
 
 function jsonResp(handler){return async req=>({
 	status:200,
@@ -63,7 +70,7 @@ which( req => undefined, req => req+10)(2)
 
 Example:
 ```javascript
-way( pass => req => "N"+pass(req+"er"), req=> req+" "+req)("ev")
+way( pass => async req => await "N"+pass(req+"er"), req=> req+" "+req)("ev")
 -> "Never ever"
 ```
 True to typical functional style, it is not recommended to mutate the request object directly, but rather to pass a modified copy to the next handler, as the chain might eventually return undefined, but the mutated request object could live around to be used by other chains, and it would usually be unexpected that a rejected chain would have influenced the subsequent chains.
@@ -136,7 +143,7 @@ As a minimalistic router, there are no constructs for nested or optional path/do
 
 # Middleware
 
-I've already shown several simple examples of middleware above. However, the signature for middleware is the same as that accepted by spirit-router, so you can find some more [docs about middleware](https://github.com/spirit-js/spirit-router/blob/master/docs/Guide.md#middleware) there, including adapters to [use most Express middleware](https://github.com/spirit-js/spirit-express).
+I've already shown several simple examples of middleware above. However, the signature for middleware is the same as that accepted by spirit-router, so you can find some more [docs about middleware](https://github.com/spirit-js/spirit-router/blob/master/docs/Guide.md#middleware) there, including adapters to [use most Express middleware](https://github.com/spirit-js/spirit-express), and [commonly-used middleware](https://github.com/spirit-js/spirit-common).
 
 # Examples (TODO)
 
