@@ -38,12 +38,11 @@ Like Spirit, Spirit Guide goes all in on the use of functions, providing great f
 
 # Interfaces
 
-Spirit Guide exposes two core functions, `which` and `way`
+Spirit Guide exposes three functions, `which`, `way`, and `route` (or `r`)
 
  - which( ...handlers ) -> handler
- - way( ...middles, handler ) -> handler
-
-Spirit Guide also comes with one built-in middleware, `route` or `r`
+ - way( ...middlewares, handler ) -> handler
+ - route( string ) -> middleware
 
 ### which
 
@@ -78,6 +77,11 @@ True to typical functional style, it is not recommended to mutate the request ob
 
 `route` takes a string-based representation of a criteria used to match HTTP requests and returns a middleware that accepts the relevant HTTP requests.
 
+```javascript
+r("/api/:version")(console.log)({pathname:"/api/v2.1"})
+//logs { pathname: '/api/v2.1', params: { version: 'v2.1' } }
+```
+
 For example, if you had manually written the following:
 ```javascript
 const app = which(
@@ -101,19 +105,29 @@ const app = which(
 )
 ```
 
+See below for a detailed description of the strings that route accepts.
+
+# Middleware
+
+I've already shown several simple examples of middleware above. However, the signature for middleware is the same as that accepted by spirit-router, so you can find some more [docs about middleware](https://github.com/spirit-js/spirit-router/blob/master/docs/Guide.md#middleware) there, including adapters to [use most Express middleware](https://github.com/spirit-js/spirit-express), and [commonly-used middleware](https://github.com/spirit-js/spirit-common).
+
+# Route string reference
+
 ** WARNING: The section below describes intended _but still untested_ behavior**
 
-In addition to path matching, the route function recognizes the following overall pattern: `"VERB //hostname/path/to/:name/**"`
+In addition to path matching, the route function recognizes the following overall pattern:
+
+`"VERB //hostname/path/to/:name/**"`
 
 | Route spec | Req object | Result
-| ---
-| `/path` |	`{path:"/path"})` | Accepts
-| `/path` | `{path:"/path/plus"}` | **Rejects**
-| `/path/*` | `{path:"/path/plus"}` | Accepts
-| `/path/:var` | `{path:"/path/plus"}` | Accepts & adds `params:{var:'plus'}`
-| `/path/**` | `{path:"/path/plus"}` | Accepts & adds `rest:['plus']`
-| way(r`/path/**`,r`/plus`) | `{path:"/path/plus"}` | **Rejects**
-| way(r`/path/**`,r`.../plus`) | `{path:"/path/plus"}` | Accepts
+| --- | --- | ---
+| `/path` |	`{pathname:"/path"})` | Accepts
+| `/path` | `{pathname:"/path/plus"}` | **Rejects**
+| `/path/*` | `{pathname:"/path/plus"}` | Accepts
+| `/path/:var` | `{pathname:"/path/plus"}` | Accepts & adds `params:{var:'plus'}`
+| `/path/**` | `{pathname:"/path/plus"}` | Accepts & adds `rest:['plus']`
+| way(r`/path/**`,r`/plus`) | `{pathname:"/path/plus"}` | **Rejects**
+| way(r`/path/**`,r`.../plus`) | `{pathname:"/path/plus"}` | Accepts
 | `//foo.bar` | `{host: "foo.bar"}` | Accepts
 | `//foo.bar` | `{host: "www.foo.bar"}` | **Rejects**
 | `//*.foo.bar` | `{host: "www.foo.bar"}` | Accepts
@@ -124,14 +138,11 @@ In addition to path matching, the route function recognizes the following overal
 | `//**.foo.bar` | `{host: "www.qa.foo.bar"}` | Accepts
 | `GET`	| `{verb: "GET"}` | Accepts
 | `*`	| `{}` | Accepts
-| `POST /query`	| `{verb: "POST", path:"/query"}` | Accepts
-| `GET **.foo.bar/`	| `{verb: "POST", host:"foo.bar", path:"/"}` | Accepts
+| `POST /query`	| `{verb: "POST", pathname:"/query"}` | Accepts
+| `GET **.foo.bar/`	| `{verb: "POST", host:"foo.bar", pathname:"/"}` | Accepts
 
 As a minimalistic router, there are no constructs for nested or optional path/domain components.
 
-# Middleware
-
-I've already shown several simple examples of middleware above. However, the signature for middleware is the same as that accepted by spirit-router, so you can find some more [docs about middleware](https://github.com/spirit-js/spirit-router/blob/master/docs/Guide.md#middleware) there, including adapters to [use most Express middleware](https://github.com/spirit-js/spirit-express), and [commonly-used middleware](https://github.com/spirit-js/spirit-common).
 
 # Examples (TODO)
 
