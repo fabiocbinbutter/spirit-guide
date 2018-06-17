@@ -15,7 +15,7 @@ const app = which(
 		req => spirit.fileResponse("index.html")
 	),
 	way(
-		pass => req => request.hostname==localhost || undefined,
+		pass => req => req.hostname=="localhost" ? pass(req) : undefined,
 		jsonResp,
 		req=>req.query
 	)
@@ -23,10 +23,10 @@ const app = which(
 http.createServer(spirit.adapter(app)).listen(6103,
  ()=>console.log("http://localhost:6103"))
 
-function jsonResp(handler){return async req=>({
+function jsonResp(pass){return async req=>({
 	status:200,
 	headers:{"Content-Type":"application/json"},
-	body: JSON.stringify(await handler(req))
+	body: JSON.stringify(await pass(req))
 })}
 ```
 
