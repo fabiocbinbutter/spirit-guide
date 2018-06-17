@@ -40,12 +40,10 @@ Like Spirit, Spirit Guide goes all in on the use of functions, providing great f
 
 Spirit Guide exposes two core functions, `which` and `way`
 
- - which( ...handlers) -> handler
- - way(...middles, handler) -> handler
+ - which( ...handlers ) -> handler
+ - way( ...middles, handler ) -> handler
 
-In simpler terms, both of `which` and `way` return a "handler" function. A handler function is a function that (usually) takes a request argument and returns a response.
-
-Spirit also comes with one built-in middleware, `route` or `r`
+Spirit Guide also comes with one built-in middleware, `route` or `r`
 
 ### which
 
@@ -73,17 +71,7 @@ Example:
 way( pass => async req => await "N"+pass(req+"er"), req=> req+" "+req)("ev")
 -> "Never ever"
 ```
-True to typical functional style, it is not recommended to mutate the request object directly, but rather to pass a modified copy to the next handler, as the chain might eventually return undefined, but the mutated request object could live around to be used by other chains, and it would usually be unexpected that a rejected chain would have influenced the subsequent chains.
-
-The following example shows a typical way that a request can be transformed before delegating to subsequent handlers:
-
-```javascript
-var app = way(onlyParam('q'), memoize, logIfCalled, final)
-function onlyParam(p){return pass => req => pass(req.query[p]) }
-app({q:"Memoize me!"}) //Logs
-app({q:"Memoize me!"}) //Does not log, due to memoization
-app({q:"Memoize me!", misc:"Irrelevant"}) //Does not log, due to first middleware
-```
+True to typical functional style, it is not recommended to mutate the request object directly, but rather to pass a modified copy to the next handler.
 
 ### route
 *Also exposed as `r` for shorthand*
@@ -93,13 +81,13 @@ app({q:"Memoize me!", misc:"Irrelevant"}) //Does not log, due to first middlewar
 For example, if you had manually written the following:
 ```javascript
 const app = which(
-	way(pass => req => req.path == "/" ? pass(req) : undefined ,
+	way(pass => req => req.pathname == "/" ? pass(req) : undefined ,
 		async req => await spirit.fileResponse("index.html")
 	)
 )
 ```
 
-You could use route to shorten that to:
+You could use `route` to shorten that to:
 ```javascript
 const app = which(
 	way(route("/"), async req => await spirit.fileResponse("index.html"))
@@ -164,3 +152,16 @@ I've already shown several simple examples of middleware above. However, the sig
 	- Error handling
 	- Response customization
 	- Importing Express middleware
+
+
+### Memoize (TODO)
+
+The following example shows a typical way that a request can be transformed before delegating to subsequent handlers:
+
+```javascript
+var app = way(onlyParam('q'), memoize, logIfCalled, final)
+function onlyParam(p){return pass => req => pass(req.query[p]) }
+app({q:"Memoize me!"}) //Logs
+app({q:"Memoize me!"}) //Does not log, due to memoization
+app({q:"Memoize me!", misc:"Irrelevant"}) //Does not log, due to first middleware
+```
